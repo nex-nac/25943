@@ -1,18 +1,19 @@
 #include <stdio.h>
 #include <time.h>
+#include <stdlib.h>
 
-int main(void)
+int main()
 {
     time_t current_time;
     struct tm *california_time;
+    char timezone[] = "TZ=PST8";
 
-    current_time = time(NULL);
+    putenv(timezone);
+    tzset();
+    time(&current_time);
+    california_time = localtime(&current_time);
 
-    current_time -= 8 * 60 * 60;
-
-    california_time = gmtime(&current_time);
-
-    printf("california time: %02d.%02d.%04d %02d:%02d:%02d\n",
+    printf("California time: %02d.%02d.%04d %02d:%02d:%02d\n",
            california_time->tm_mday,
            california_time->tm_mon + 1,
            california_time->tm_year + 1900,
