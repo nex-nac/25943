@@ -21,7 +21,7 @@ int main(void)
     setuid(getuid());
 
     printf("\nAfter setuid():\n");
-    printf("Real UID:      %ld\n", (long)getuid());
+    printf("Real UID: %ld\n", (long)getuid());
     printf("Effective UID: %ld\n", (long)geteuid());
 
     file = fopen("data.txt", "r");
