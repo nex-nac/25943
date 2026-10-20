@@ -77,6 +77,12 @@ int main(int argc, char **argv)
     if (start < size)
         table[lines++] = (line_t){start, size - start};
 
+    printf("Номер\tСмещение\tДлина (байт)\n");
+    for (int i = 0; i < lines; ++i) {
+        printf("%d\t%zu\t\t%zu\n",
+               i + 1, table[i].offset, table[i].length);
+    }
+
     action.sa_handler = timeout;
     sigemptyset(&action.sa_mask);
     if (sigaction(SIGALRM, &action, NULL) == -1) {
