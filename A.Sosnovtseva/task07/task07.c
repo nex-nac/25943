@@ -93,8 +93,13 @@ int main(int argc, char **argv)
         if (!time_is_over)
             answer = fgets(input, sizeof(input), stdin);
 
-                if (time_is_over) {
-            puts("\nTime is over.");
+        if (time_is_over) {
+            puts("\nTime is over. Complete file:");
+            if (size > 0) {
+                fwrite(data, 1, size, stdout);
+                if (data[size - 1] != '\n')
+                    putchar('\n');
+            }
             break;
         }
         if (answer == NULL)
