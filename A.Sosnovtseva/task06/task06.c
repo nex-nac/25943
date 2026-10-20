@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #define MAX_LINES 1000
 #define MAX_LINE_LENGTH 4096
@@ -19,14 +20,10 @@ static int fd;
 
 static void timeout(int sig)
 {
-    char c;
-    const char message[] = "\nTime is over. Complete file:\n";
+    const char message[] = "\nTime is over.\n";
 
     (void)sig;
     write(STDOUT_FILENO, message, sizeof(message) - 1);
-    if (lseek(fd, 0, SEEK_SET) != (off_t)-1)
-        while (read(fd, &c, 1) == 1)
-            write(STDOUT_FILENO, &c, 1);
     close(fd);
     _exit(EXIT_SUCCESS);
 }
@@ -68,6 +65,7 @@ int main(int argc, char **argv)
             perror("lseek");
             goto cleanup;
         }
+
         table[lines++] = (line_t){start, (size_t)(position - start)};
         start = position;
     }
@@ -82,8 +80,15 @@ int main(int argc, char **argv)
         perror("lseek");
         goto cleanup;
     }
+
     if (position > start)
         table[lines++] = (line_t){start, (size_t)(position - start)};
+
+    printf("Номер\tСмещение\tДлина (байт)\n");
+    for (int i = 0; i < lines; ++i) {
+        printf("%d\t%jd\t\t%zu\n",
+               i + 1, (intmax_t)table[i].offset, table[i].length);
+    }
 
     printf("Line number (5 seconds, 0 to quit): ");
     fflush(stdout);
@@ -96,6 +101,7 @@ int main(int argc, char **argv)
         errno = 0;
         long number = strtol(input, &end, 10);
         int invalid = (end == input || errno == ERANGE);
+
         while (isspace((unsigned char)*end))
             ++end;
 
@@ -106,10 +112,12 @@ int main(int argc, char **argv)
                 alarm(0);
                 first_input = 0;
             }
+
             if (number == 0)
                 break;
 
             line_t line = table[number - 1];
+
             if (line.length >= sizeof(text)) {
                 puts("Line is too long");
             } else {
@@ -121,17 +129,21 @@ int main(int argc, char **argv)
                 size_t total = 0;
                 while (total < line.length) {
                     result = read(fd, text + total, line.length - total);
+
                     if (result < 0 && errno == EINTR)
                         continue;
+
                     if (result <= 0) {
                         fprintf(stderr, "Cannot read complete line\n");
                         goto cleanup;
                     }
+
                     total += (size_t)result;
                 }
 
                 text[total] = '\0';
                 printf("%s", text);
+
                 if (total == 0 || text[total - 1] != '\n')
                     putchar('\n');
             }
@@ -145,9 +157,11 @@ int main(int argc, char **argv)
 
 cleanup:
     alarm(0);
+
     if (close(fd) == -1) {
         perror("close");
         status = EXIT_FAILURE;
     }
+
     return status;
 }
