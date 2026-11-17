@@ -1,6 +1,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
+#include <poll.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
@@ -13,12 +14,45 @@ static void remove_chars(int count)
         fputs("\b \b", stdout);
 }
 
+static int escape_byte(unsigned char *key)
+{
+    struct pollfd input;
+    int ready;
+
+    input.fd = STDIN_FILENO;
+    input.events = POLLIN;
+
+    do {
+        ready = poll(&input, 1, 100);
+    } while (ready == -1 && errno == EINTR);
+
+    return ready > 0 && read(STDIN_FILENO, key, 1) == 1;
+}
+
+static int skip_special_key(void)
+{
+    unsigned char part;
+
+    if (!escape_byte(&part))
+        return -1;
+
+    if (part != '[' && part != 'O')
+        return part;
+
+    while (escape_byte(&part)) {
+        if (part >= 0x40 && part <= 0x7e)
+            break;
+    }
+
+    return -1;
+}
+
 int main(void)
 {
     struct termios saved, mode;
     char text[LIMIT];
     unsigned char key;
-    int used = 0, cut, tail, failed = 0;
+    int used = 0, cut, tail, next, failed = 0;
     ssize_t n;
 
     if (tcgetattr(STDIN_FILENO, &saved) == -1) {
@@ -51,6 +85,7 @@ int main(void)
             break;
         }
 
+handle_key:
         if (key == saved.c_cc[VERASE]) {
             if (used > 0) {
                 remove_chars(1);
@@ -73,6 +108,14 @@ int main(void)
         } else if (key == 4) { /* Ctrl-D */
             if (used == 0)
                 break;
+        } else if (key == 27) { /* Escape */
+            next = skip_special_key();
+            putchar('\a');
+
+            if (next >= 0) {
+                key = (unsigned char)next;
+                goto handle_key;
+            }
         } else if (!isprint(key)) {
             putchar('\a');
         } else {
@@ -87,7 +130,7 @@ int main(void)
                 while (cut > 0 && text[cut - 1] != ' ')
                     --cut;
 
-                /* Split a word if it is longer than 40 characters. */
+                /* Split words longer than 40 characters. */
                 tail = (cut == 0) ? 0 : used - cut;
 
                 remove_chars(tail);
