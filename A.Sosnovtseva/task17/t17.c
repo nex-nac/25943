@@ -94,7 +94,7 @@ handle_key:
         } else if (key == saved.c_cc[VKILL]) {
             remove_chars(used);
             used = 0;
-        } else if (key == 23) { /* Ctrl-W */
+        } else if (key == 23) { //Ctrl-W
             cut = used;
 
             while (cut > 0 && text[cut - 1] == ' ')
@@ -105,10 +105,10 @@ handle_key:
 
             remove_chars(used - cut);
             used = cut;
-        } else if (key == 4) { /* Ctrl-D */
+        } else if (key == 4) { //Ctrl-D
             if (used == 0)
                 break;
-        } else if (key == 27) { /* Escape */
+        } else if (key == 27) { //Escape
             next = skip_special_key();
             putchar('\a');
 
@@ -130,7 +130,6 @@ handle_key:
                 while (cut > 0 && text[cut - 1] != ' ')
                     --cut;
 
-                /* Split words longer than 40 characters. */
                 tail = (cut == 0) ? 0 : used - cut;
 
                 remove_chars(tail);
