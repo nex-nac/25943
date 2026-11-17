@@ -1,10 +1,10 @@
 CC = cc
 CFLAGS =
 
-all: task9
+all: t9
 
-task9: task9.c
-	$(CC) $(CFLAGS) -o task9 task9.c
+t9: t9.c
+	$(CC) $(CFLAGS) -o t9 t9.c
 
 clean:
-	rm -f task9
+	rm -f t9
