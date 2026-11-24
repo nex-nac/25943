@@ -5,8 +5,8 @@ CFLAGS = -Wall -Wextra -std=c99
 
 all: main
 
-main: main.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) main.c $(LDFLAGS) $(LDLIBS) -o main
+main: t21.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) t21.c $(LDFLAGS) $(LDLIBS) -o main
 
 clean:
 	rm -f main
